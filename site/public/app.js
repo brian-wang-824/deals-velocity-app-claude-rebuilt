@@ -57,6 +57,35 @@ function formatVelocity(value) {
   return `${Number(value).toFixed(1)}/hr`;
 }
 
+function formatDelta(value) {
+  if (value == null || Number.isNaN(Number(value))) return "pending";
+  const amount = Number(value);
+  if (amount > 0) return `+${amount}`;
+  return `${amount}`;
+}
+
+function renderMetricIcon(type) {
+  const icons = {
+    votes: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.3 7.2 7.8 2h1.4l-.5 4.2h4.1l-1.4 7.2H4.2V7.2h1.1Z"/><path d="M2.2 7.2h2v6.2h-2z"/></svg>`,
+    comments: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.2h11v7.4h-5L5.2 14v-3.4H2.5V3.2Z"/></svg>`,
+    velocity: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 10.8h2.1l1.7-5.6 3.1 7.7 2-4.1h2.3v1.8h-1.2l-3.3 3.2-2.7-6.6-1 3.6h-3z"/></svg>`,
+    delta: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.6 14 13H2L8 2.6Z"/></svg>`,
+  };
+  return icons[type] || "";
+}
+
+function renderPriceLine(d, discount) {
+  const currentPrice = d.price ? escapeHtml(d.price) : "See deal";
+  const referencePrice = d.original_price ? escapeHtml(d.original_price) : "";
+
+  return `
+    <div class="deal-price-row">
+      <span class="deal-price">${currentPrice}</span>
+      ${referencePrice ? `<span class="deal-reference-price">${referencePrice}</span>` : ""}
+      ${discount ? `<span class="deal-discount">${discount}</span>` : ""}
+    </div>`;
+}
+
 function applyFiltersAndSort() {
   const q = els.search.value.trim().toLowerCase();
   const velocity = els.velocityFilter.value;
@@ -107,30 +136,33 @@ function renderDealCard(d) {
   const discount = formatDiscount(d.discount_percentage);
 
   return `
-    <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener" class="deal-card group">
+    <article class="deal-card group">
       <div class="relative aspect-square overflow-hidden border-b border-zinc-800 bg-zinc-900">
         <img src="${escapeHtml(d.image_url || "")}" alt="" loading="lazy"
              class="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
-        ${discount ? `<span class="absolute left-2 top-2 rounded bg-emerald-400 px-2 py-1 text-xs font-bold text-zinc-950">${discount}</span>` : ""}
       </div>
       <div class="flex min-h-40 flex-col gap-3 p-3">
-        <div class="flex items-start justify-between gap-2">
-          <p class="line-clamp-3 text-sm font-semibold leading-5 text-zinc-100">${escapeHtml(d.title)}</p>
+        <div class="deal-title-row">
+          <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener"
+             class="line-clamp-3 text-sm font-semibold leading-5 text-zinc-100 transition hover:text-emerald-300">
+            ${escapeHtml(d.title)}
+          </a>
           <span class="velocity-badge ${velocityBadgeClass(d.velocity_label)} shrink-0">${escapeHtml(d.velocity_label)}</span>
         </div>
         <div class="mt-auto space-y-3">
           <div>
-            <p class="text-xl font-semibold text-white">${d.price ? escapeHtml(d.price) : "See deal"}</p>
+            ${renderPriceLine(d, discount)}
             <p class="truncate text-xs text-zinc-500">${escapeHtml(d.store || "Unknown store")}</p>
           </div>
-          <div class="grid grid-cols-3 gap-2 border-t border-zinc-800 pt-3 text-xs">
-            <span><strong>${d.votes ?? 0}</strong><small>votes</small></span>
-            <span><strong>${d.comments ?? 0}</strong><small>talk</small></span>
-            <span><strong>${formatVelocity(d.recent_velocity)}</strong><small>velocity</small></span>
+          <div class="grid grid-cols-4 gap-2 border-t border-zinc-800 pt-3 text-xs">
+            <span class="deal-metric">${renderMetricIcon("votes")}<strong>${d.votes ?? 0}</strong><small>votes</small></span>
+            <span class="deal-metric">${renderMetricIcon("comments")}<strong>${d.comments ?? 0}</strong><small>comments</small></span>
+            <span class="deal-metric">${renderMetricIcon("velocity")}<strong>${formatVelocity(d.recent_velocity)}</strong><small>velocity</small></span>
+            <span class="deal-metric">${renderMetricIcon("delta")}<strong>${formatDelta(d.vote_delta)}</strong><small>delta</small></span>
           </div>
         </div>
       </div>
-    </a>`;
+    </article>`;
 }
 
 function renderPagination(totalPages) {

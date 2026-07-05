@@ -31,6 +31,54 @@
     @apply block truncate text-[0.65rem] uppercase tracking-wide text-zinc-500;
   }
 
+  .deal-title-row {
+    @apply grid h-16 grid-cols-[1fr_auto] items-start gap-2;
+  }
+
+  .site-logo {
+    @apply mt-1 grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-emerald-300 text-zinc-950 shadow-lg shadow-emerald-950/30;
+  }
+
+  .site-logo svg {
+    @apply h-8 w-8 fill-zinc-950/15 stroke-zinc-950 stroke-[2.2];
+  }
+
+  .site-logo circle {
+    @apply fill-zinc-950 stroke-0;
+  }
+
+  .site-logo path:last-child {
+    @apply fill-none stroke-emerald-300 stroke-[1.7];
+  }
+
+  .deal-price-row {
+    @apply flex min-h-7 flex-wrap items-baseline gap-x-2 gap-y-1;
+  }
+
+  .deal-price {
+    @apply text-xl font-semibold leading-7 text-white;
+  }
+
+  .deal-reference-price {
+    @apply text-sm font-medium leading-5 text-zinc-500 line-through decoration-zinc-600;
+  }
+
+  .deal-discount {
+    @apply rounded bg-emerald-400 px-1.5 py-0.5 text-xs font-bold leading-none text-zinc-950;
+  }
+
+  .deal-metric {
+    @apply min-w-0;
+  }
+
+  .deal-metric svg {
+    @apply mb-1 h-4 w-4 fill-zinc-500;
+  }
+
+  .deal-metric:hover svg {
+    @apply fill-emerald-300;
+  }
+
   .velocity-badge {
     @apply inline-flex max-w-24 items-center rounded px-2 py-1 text-[0.65rem] font-bold uppercase leading-none tracking-wide;
   }
