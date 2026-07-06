@@ -8,9 +8,7 @@
   }
 
   body {
-    background:
-      radial-gradient(circle at top left, rgba(16, 185, 129, 0.12), transparent 28rem),
-      linear-gradient(180deg, #09090b 0%, #18181b 100%);
+    background: linear-gradient(180deg, #09090b 0%, #18181b 100%);
   }
 }
 
@@ -21,14 +19,6 @@
 
   .deal-card {
     @apply overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/80 shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:border-zinc-600 hover:bg-zinc-900;
-  }
-
-  .deal-card strong {
-    @apply block truncate font-semibold text-zinc-100;
-  }
-
-  .deal-card small {
-    @apply block truncate text-[0.65rem] uppercase tracking-wide text-zinc-500;
   }
 
   .deal-title-row {

@@ -5,6 +5,9 @@ venv/
 .env
 .pytest_cache/
 
+# Codex/upload scratch artifacts
+.codex-remote-attachments/
+
 # Site build output and node deps
 site/node_modules/
 site/dist/
