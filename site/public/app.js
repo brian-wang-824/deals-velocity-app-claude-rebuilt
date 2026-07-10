@@ -159,12 +159,21 @@ function renderVelocityStamp(label) {
   return "";
 }
 
+function renderDealStamp(d) {
+  const voteDelta = Number(d.vote_delta);
+  if (d.vote_delta != null && !Number.isNaN(voteDelta) && voteDelta >= 5) {
+    return `<span class="badge-stamp badge-money" aria-label="Pace increased by 5 or more votes since the last snapshot">💰💰💰</span>`;
+  }
+  return renderVelocityStamp(d.velocity_label);
+}
+
 function renderPriceLine(d, discount) {
   const display = classifyPrice(d.price);
   const currentPrice = escapeHtml(display.value);
   const referencePrice = display.kind === "price" && d.original_price
     ? escapeHtml(d.original_price)
     : "";
+  const condition = renderConditionLine(d);
 
   return `
     <div class="ticket-price-row ticket-price-row-${display.kind}">
@@ -172,13 +181,14 @@ function renderPriceLine(d, discount) {
       <span class="ticket-price">${currentPrice}</span>
       ${referencePrice ? `<span class="ticket-reference-price">${referencePrice}</span>` : ""}
       ${display.kind === "price" && discount ? `<span class="ticket-discount">${discount}</span>` : ""}
+      ${condition}
     </div>`;
 }
 
 function renderConditionLine(d) {
   const condition = getDealCondition(d);
   if (!condition) return "";
-  return `<p class="ticket-condition"><span>Condition</span> ${escapeHtml(condition)}</p>`;
+  return `<span class="ticket-condition"><span class="sr-only">Condition: </span>${escapeHtml(condition)}</span>`;
 }
 
 function renderPostedTime(d) {
@@ -253,7 +263,7 @@ function renderDealCard(d) {
 
   return `
     <article class="ticket">
-      ${renderVelocityStamp(d.velocity_label)}
+      ${renderDealStamp(d)}
       <div class="ticket-tear" aria-hidden="true"></div>
       <div class="ticket-photo">
         <img src="${escapeHtml(d.image_url || "")}" alt="" loading="lazy" />
@@ -263,7 +273,6 @@ function renderDealCard(d) {
           ${escapeHtml(d.title)}
         </a>
         ${renderPriceLine(d, discount)}
-        ${renderConditionLine(d)}
         <div class="ticket-foot">
           <div class="ticket-meta-row">
             <span class="ticket-source">${escapeHtml(d.store || "Unknown store")} · ${renderPostedTime(d)}</span>
@@ -387,6 +396,7 @@ if (typeof module !== "undefined") {
     filterDealsByPostedWindow,
     getDealCondition,
     getPostTimeMs,
+    renderDealStamp,
     renderTallyDelta,
     renderVelocityStamp,
     sortDealsByNewest,

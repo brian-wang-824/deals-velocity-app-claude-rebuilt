@@ -10,6 +10,7 @@ const {
   formatPostTime,
   getPostTimeMs,
   getDealCondition,
+  renderDealStamp,
   renderTallyDelta,
   renderVelocityStamp,
   sortDealsByNewest,
@@ -143,6 +144,15 @@ assert.strictEqual(
 );
 assert.strictEqual(renderVelocityStamp("warming"), "");
 assert.strictEqual(renderVelocityStamp("needs second scrape"), "");
+assert.strictEqual(
+  renderDealStamp({ vote_delta: 5, velocity_label: "surging" }),
+  '<span class="badge-stamp badge-money" aria-label="Pace increased by 5 or more votes since the last snapshot">💰💰💰</span>',
+);
+assert.strictEqual(
+  renderDealStamp({ vote_delta: 4, velocity_label: "surging" }),
+  '<span class="badge-stamp badge-surging">SURGING</span>',
+);
+assert.strictEqual(renderDealStamp({ vote_delta: null, velocity_label: "warming" }), "");
 
 assert.ok(renderTallyDelta({ vote_delta: 2 }).includes("+2 tallies since last count"));
 assert.ok(renderTallyDelta({ vote_delta: 2, recent_velocity: 12.06 }).includes("/hr") === false);

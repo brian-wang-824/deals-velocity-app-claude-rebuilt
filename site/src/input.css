@@ -252,7 +252,6 @@
 
   .ticket-body {
     display: flex;
-    min-height: 13rem;
     flex: 1;
     flex-direction: column;
     padding: 0.85rem 0.9rem 1rem;
@@ -307,7 +306,7 @@
   }
 
   .ticket-offer-label,
-  .ticket-condition span {
+  .ticket-condition {
     color: var(--paper-muted);
     font-family: var(--font-ticket);
     font-size: 0.75rem;
@@ -331,14 +330,9 @@
   }
 
   .ticket-condition {
-    margin: 0.45rem 0 0;
-    color: var(--paper-muted);
-    font-size: 0.75rem;
-    line-height: 1.45;
-  }
-
-  .ticket-condition span {
-    margin-right: 0.25rem;
+    padding-left: 0.45rem;
+    border-left: 1px solid var(--paper-line);
+    line-height: 1.35;
   }
 
   .ticket-foot {
@@ -424,6 +418,13 @@
   .badge-hot {
     border-color: var(--mustard);
     color: var(--mustard-text);
+  }
+
+  .badge-money {
+    border-color: var(--mint);
+    background: var(--ink);
+    font-size: 0.8rem;
+    letter-spacing: 0;
   }
 
   .ticket-state {
@@ -612,9 +613,6 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .ticket-body {
-    min-height: 13.5rem;
-  }
 }
 
 @media (min-width: 216rem) {
