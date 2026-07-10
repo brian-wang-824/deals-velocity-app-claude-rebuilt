@@ -54,7 +54,7 @@ class TestEnrichDealsWithVelocity(unittest.TestCase):
         self.assertEqual(deal["vote_delta"], 12)
         self.assertEqual(deal["recent_velocity"], 12.0)
         self.assertEqual(deal["lifetime_velocity"], 12.0)
-        self.assertEqual(deal["velocity_label"], "surging")  # >= 12
+        self.assertEqual(deal["velocity_label"], "hot")  # >= 12
 
     def test_new_deal_appearing_mid_history_only_compares_to_its_own_first_sighting(self):
         history = [
@@ -90,13 +90,26 @@ class TestComputeVelocityAndLabels(unittest.TestCase):
         self.assertIsNone(compute_velocity(10, datetime(2026, 1, 1, 12), None, None))
 
     def test_velocity_label_thresholds(self):
-        self.assertEqual(_velocity_label(15, None), "surging")
-        self.assertEqual(_velocity_label(7, None), "hot")
-        self.assertEqual(_velocity_label(2, None), "warming")
+        self.assertEqual(_velocity_label(36, None), "inferno")
+        self.assertEqual(_velocity_label(30, None), "on fire")
+        self.assertEqual(_velocity_label(24, None), "blazing")
+        self.assertEqual(_velocity_label(18, None), "surging")
+        self.assertEqual(_velocity_label(12, None), "hot")
+        self.assertEqual(_velocity_label(6, None), "warming")
         self.assertEqual(_velocity_label(0.5, None), "slow")
         self.assertEqual(_velocity_label(0, None), "flat")
         self.assertEqual(_velocity_label(-1, None), "cooling")
         self.assertEqual(_velocity_label(None, None), "needs second scrape")
+
+    def test_irregular_scrape_interval_uses_hourly_velocity(self):
+        history = [
+            {"scraped_at": "2026-06-22T12:00:00Z", "deals": [_deal("1", 10)]},
+            {"scraped_at": "2026-06-22T12:15:00Z", "deals": [_deal("1", 13)]},
+        ]
+        deal = enrich_deals_with_velocity(history)[0]
+        self.assertEqual(deal["vote_delta"], 3)
+        self.assertEqual(deal["recent_velocity"], 12.0)
+        self.assertEqual(deal["velocity_label"], "hot")
 
 
 if __name__ == "__main__":

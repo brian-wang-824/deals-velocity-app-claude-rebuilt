@@ -56,16 +56,22 @@ def _velocity_label(recent: Optional[float], lifetime: Optional[float]) -> str:
     velocity = recent if recent is not None else lifetime
     if velocity is None:
         return "needs second scrape"
-    if velocity >= 12:
+    if velocity >= 36:
+        return "inferno"
+    if velocity >= 30:
+        return "on fire"
+    if velocity >= 24:
+        return "blazing"
+    if velocity >= 18:
         return "surging"
-    if velocity >= 6:
+    if velocity >= 12:
         return "hot"
-    if velocity >= 1:
+    if velocity >= 6:
         return "warming"
-    if velocity > 0:
-        return "slow"
     if velocity == 0:
         return "flat"
+    if velocity > 0:
+        return "slow"
     return "cooling"
 
 
