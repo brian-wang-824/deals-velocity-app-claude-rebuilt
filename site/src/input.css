@@ -87,32 +87,15 @@
 
   .site-logo {
     display: grid;
-    width: 2.75rem;
+    width: 2rem;
     height: 2.75rem;
     flex: none;
     place-items: center;
-    border-radius: var(--radius-chip);
-    background: var(--mint);
-    color: var(--ink);
   }
 
-  .site-logo svg {
-    width: 1.8rem;
-    height: 1.8rem;
-    fill: rgba(27, 27, 30, 0.15);
-    stroke: currentColor;
-    stroke-width: 2.2;
-  }
-
-  .site-logo circle {
-    fill: currentColor;
-    stroke: none;
-  }
-
-  .site-logo path:last-child {
-    fill: none;
-    stroke: var(--mint);
-    stroke-width: 1.7;
+  .site-logo img {
+    width: 1.65rem;
+    height: 2.5rem;
   }
 
   .rail-brand-copy h1 {
