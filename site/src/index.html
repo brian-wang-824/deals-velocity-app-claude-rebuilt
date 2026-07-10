@@ -6,6 +6,20 @@
   <meta name="description" content="The crowd already ordered. We're just counting tickets." />
   <meta name="theme-color" content="#1b1b1e" />
   <title>I'll Have What You're Having</title>
+  <script>
+    (function () {
+      var ua = navigator.userAgent || "";
+      var wideScreen = Math.max(screen.width || 0, screen.height || 0) >= 1280;
+      var coarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      var tvBrowser = /(Android TV|GoogleTV|SMART-TV|HbbTV|NetCast|Web0S|Tizen|AFT|TV Bro)/i.test(ua);
+      var androidLargeScreen = /Android/i.test(ua) && !/Mobile/i.test(ua) && wideScreen;
+      var forceTv = /(?:\?|&)tv=1(?:&|$)/.test(window.location.search);
+
+      if (forceTv || tvBrowser || androidLargeScreen || (coarsePointer && wideScreen)) {
+        document.documentElement.className += " tv-display";
+      }
+    })();
+  </script>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
@@ -67,9 +81,15 @@
   </header>
 
   <main class="ticket-counter">
-    <div id="deals-list" class="ticket-grid"></div>
+    <div id="deals-list" class="ticket-grid" aria-busy="true">
+      <p class="ticket-state" role="status">Counting the latest tickets...</p>
+    </div>
     <nav id="pagination" class="pagination" aria-label="Ticket pages"></nav>
   </main>
+
+  <noscript>
+    <p class="script-warning">This counter needs JavaScript enabled to load the latest tickets.</p>
+  </noscript>
 
   <script src="/app.js"></script>
 </body>

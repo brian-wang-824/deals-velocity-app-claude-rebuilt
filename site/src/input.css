@@ -17,9 +17,10 @@
     --mint: #3fb88b;
     --chrome: #9aa0a6;
     --line: rgba(243, 234, 217, 0.14);
+    --control-line: #767b80;
     --paper-line: rgba(27, 27, 30, 0.25);
-    --paper-muted: rgba(27, 27, 30, 0.62);
-    --paper-faint: rgba(27, 27, 30, 0.62);
+    --paper-muted: #57544e;
+    --paper-faint: #625e57;
     --shadow-ticket: rgba(0, 0, 0, 0.35);
     --focus: #77d9b4;
     --font-display: "Anton", sans-serif;
@@ -50,8 +51,9 @@
     font: inherit;
   }
 
+  :focus,
   :focus-visible {
-    outline: 2px solid var(--focus);
+    outline: 3px solid var(--focus);
     outline-offset: 3px;
   }
 }
@@ -100,6 +102,10 @@
     object-fit: contain;
   }
 
+  .rail-brand-copy {
+    min-width: 0;
+  }
+
   .rail-brand-copy h1 {
     margin: 0;
     font-family: var(--font-display);
@@ -127,8 +133,8 @@
   .rail-search,
   .rail-select {
     min-width: 0;
-    height: 2.6rem;
-    border: 1px solid var(--line);
+    min-height: 2.75rem;
+    border: 1px solid var(--control-line);
     border-radius: var(--radius-chip);
     background: var(--ink);
     color: var(--paper);
@@ -206,6 +212,10 @@
     transform: translateY(-2px);
   }
 
+  .ticket:focus-within {
+    filter: drop-shadow(0 6px 14px var(--shadow-ticket)) drop-shadow(0 0 0.2rem var(--focus));
+  }
+
   .ticket-tear {
     width: 100%;
     height: 11px;
@@ -218,9 +228,9 @@
 
   .ticket-photo {
     position: relative;
-    height: 10rem;
+    aspect-ratio: 4 / 3;
     overflow: hidden;
-    border-bottom: 1px dashed var(--paper-line);
+    border-bottom: 1px solid var(--paper-line);
     background: var(--photo-stage);
   }
 
@@ -235,14 +245,14 @@
   .ticket-photo img {
     width: 100%;
     height: 100%;
-    padding: 0.35rem;
+    padding: 0.75rem;
     object-fit: contain;
     object-position: center;
   }
 
   .ticket-body {
     display: flex;
-    min-height: 10.5rem;
+    min-height: 13rem;
     flex: 1;
     flex-direction: column;
     padding: 0.85rem 0.9rem 1rem;
@@ -250,15 +260,20 @@
 
   .ticket-name {
     display: -webkit-box;
-    min-height: 2.55rem;
+    min-height: 4.05rem;
     overflow: hidden;
     color: var(--ink);
-    font-size: 0.86rem;
+    font-size: 0.95rem;
     font-weight: 600;
     line-height: 1.4;
     text-decoration: none;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
+  }
+
+  .ticket-name:focus-visible {
+    border-radius: 1px;
+    outline-color: #09634d;
   }
 
   .ticket-name:hover {
@@ -282,6 +297,25 @@
     font-weight: 700;
   }
 
+  .ticket-price-row-offer {
+    align-items: center;
+  }
+
+  .ticket-price-row-offer .ticket-price {
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  .ticket-offer-label,
+  .ticket-condition span {
+    color: var(--paper-muted);
+    font-family: var(--font-ticket);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
   .ticket-reference-price {
     color: var(--paper-faint);
     font-size: 0.75rem;
@@ -292,15 +326,26 @@
     border-radius: var(--radius-card);
     background: var(--mint);
     padding: 0.15rem 0.4rem;
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     font-weight: 700;
+  }
+
+  .ticket-condition {
+    margin: 0.45rem 0 0;
+    color: var(--paper-muted);
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+
+  .ticket-condition span {
+    margin-right: 0.25rem;
   }
 
   .ticket-foot {
     display: grid;
     gap: 0.55rem;
     margin-top: auto;
-    border-top: 1px dashed var(--paper-line);
+    border-top: 1px solid var(--paper-line);
     padding-top: 0.6rem;
   }
 
@@ -322,7 +367,8 @@
     overflow: hidden;
     color: var(--paper-muted);
     font-family: var(--font-ticket);
-    font-size: 0.65rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -345,7 +391,8 @@
 
   .ticket-rate {
     font-family: var(--font-ticket);
-    font-size: 0.66rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
   }
 
   .ticket-rate {
@@ -390,6 +437,29 @@
     color: var(--paper);
   }
 
+  .ticket-state-error p {
+    margin: 0 0 1rem;
+  }
+
+  .retry-button {
+    min-height: 2.75rem;
+    border: 2px solid var(--focus);
+    border-radius: var(--radius-chip);
+    background: var(--mint);
+    padding: 0.6rem 1rem;
+    color: var(--ink);
+    font-family: var(--font-ticket);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .script-warning {
+    width: min(100% - 2rem, 80rem);
+    margin: 2rem auto;
+    color: var(--paper);
+    text-align: center;
+  }
+
   .pagination {
     display: flex;
     flex-wrap: wrap;
@@ -400,8 +470,9 @@
   }
 
   .pagination-button {
-    min-width: 2.2rem;
-    border: 1px solid var(--line);
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    border: 1px solid var(--control-line);
     border-radius: var(--radius-chip);
     background: var(--ink-soft);
     padding: 0.45rem 0.65rem;
@@ -412,6 +483,15 @@
 
   .pagination-button:hover {
     border-color: var(--chrome);
+  }
+
+  .pagination-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.52;
+  }
+
+  .pagination-direction {
+    padding-inline: 0.85rem;
   }
 
   .pagination-button[aria-current="page"] {
@@ -436,11 +516,17 @@
 
 @media (min-width: 64rem) {
   .ticket-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 80rem) {
+  .ticket-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 96rem) {
   .ticket-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
@@ -497,7 +583,7 @@
   }
 
   .ticket-name {
-    font-size: 0.94rem;
+    font-size: 1rem;
   }
 
   .ticket-price {
@@ -507,7 +593,7 @@
   .ticket-source,
   .ticket-rate-label,
   .ticket-rate {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -526,12 +612,8 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .ticket-photo {
-    height: 11rem;
-  }
-
   .ticket-body {
-    min-height: 11rem;
+    min-height: 13.5rem;
   }
 }
 
@@ -541,7 +623,36 @@
   }
 }
 
+/* Google TV and other remote-driven browsers often expose a desktop-sized
+ * viewport even when the viewer is several feet away. */
+html.tv-display {
+  font-size: 1.5rem;
+  font-size: clamp(1.375rem, 1vw, 2rem);
+}
+
+.tv-display .rail-bar,
+.tv-display .rail-status,
+.tv-display .ticket-counter {
+  width: 92%;
+  max-width: none;
+}
+
+.tv-display .rail-search,
+.tv-display .rail-select,
+.tv-display .pagination-button,
+.tv-display .retry-button {
+  min-height: 3rem;
+}
+
+.tv-display .ticket:hover {
+  transform: none;
+}
+
 @media (max-width: 48rem) {
+  .rail-brand-copy h1 {
+    line-height: 1.1;
+  }
+
   .rail-controls {
     flex-basis: 100%;
     grid-template-columns: 1fr 1fr;

@@ -1,6 +1,6 @@
 const REFRESH_INTERVAL_MINUTES = 10;
 const PAGE_SIZE = 25;
-const POLL_FOR_NEW_DATA_MS = 60_000; // check for a fresh deals.json every minute
+const POLL_FOR_NEW_DATA_MS = 60000; // check for a fresh deals.json every minute
 const POSTED_WINDOW_HOURS = {
   "3h": 3,
   "6h": 6,
@@ -9,13 +9,14 @@ const POSTED_WINDOW_HOURS = {
   "24h": 24,
 };
 const LOCAL_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
-const POST_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
+const POST_TIME_FORMAT_OPTIONS = {
   month: "short",
   day: "numeric",
   hour: "numeric",
   minute: "2-digit",
-  ...(LOCAL_TIME_ZONE ? { timeZone: LOCAL_TIME_ZONE } : {}),
-});
+};
+if (LOCAL_TIME_ZONE) POST_TIME_FORMAT_OPTIONS.timeZone = LOCAL_TIME_ZONE;
+const POST_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, POST_TIME_FORMAT_OPTIONS);
 const HAS_DOCUMENT = typeof document !== "undefined";
 
 let allDeals = [];
@@ -38,14 +39,14 @@ const els = HAS_DOCUMENT
 
 function escapeHtml(str) {
   const div = document.createElement("div");
-  div.textContent = str ?? "";
+  div.textContent = str == null ? "" : str;
   return div.innerHTML;
 }
 
 function formatRelativeTime(iso) {
   if (!iso) return "unknown";
   const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60_000);
+  const mins = Math.floor(diffMs / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
@@ -77,7 +78,9 @@ function sortDealsByNewest(deals) {
 }
 
 function filterDealsByPostedWindow(deals, windowKey = "12h", nowMs = Date.now()) {
-  const hours = POSTED_WINDOW_HOURS[windowKey] ?? POSTED_WINDOW_HOURS["12h"];
+  const hours = Object.prototype.hasOwnProperty.call(POSTED_WINDOW_HOURS, windowKey)
+    ? POSTED_WINDOW_HOURS[windowKey]
+    : POSTED_WINDOW_HOURS["12h"];
 
   const cutoff = nowMs - hours * 60 * 60 * 1000;
   return deals.filter((deal) => {
@@ -89,6 +92,45 @@ function filterDealsByPostedWindow(deals, windowKey = "12h", nowMs = Date.now())
 function formatDiscount(value) {
   if (value == null || Number.isNaN(Number(value)) || Number(value) <= 0) return "";
   return `-${Math.round(Number(value))}%`;
+}
+
+function classifyPrice(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return { kind: "missing", label: "Price", value: "See deal" };
+  }
+
+  const isCurrencyPrice = /^(?:(?:from|starting at)\s+)?\$\s*\d|^\d+\s+for\s+\$\s*\d/i.test(
+    normalized,
+  );
+  return {
+    kind: isCurrencyPrice ? "price" : "offer",
+    label: isCurrencyPrice ? "Price" : "Offer",
+    value: normalized,
+  };
+}
+
+function getDealCondition(deal) {
+  const title = String((deal && deal.title) || "").trim();
+  const price = String((deal && deal.price) || "").trim();
+  const conditions = [];
+  const titlePrefix = title.includes(":") ? title.split(":", 1)[0].trim() : "";
+
+  if (
+    titlePrefix &&
+    /\b(?:accounts?|accts?|members?|membership|customers?|coupon|stores?|in[ -]?stores?|epp|edu)\b/i.test(
+      titlePrefix,
+    )
+  ) {
+    conditions.push(titlePrefix);
+  }
+
+  const purchaseMatch = price.match(/(?:free\s+)?w\/\s*(\$[\d,.]+\+?)\s+purchase/i);
+  if (purchaseMatch) {
+    conditions.push(`Requires ${purchaseMatch[1]} purchase`);
+  }
+
+  return Array.from(new Set(conditions)).join("; ");
 }
 
 function formatDelta(value) {
@@ -118,15 +160,25 @@ function renderVelocityStamp(label) {
 }
 
 function renderPriceLine(d, discount) {
-  const currentPrice = d.price ? escapeHtml(d.price) : "See deal";
-  const referencePrice = d.original_price ? escapeHtml(d.original_price) : "";
+  const display = classifyPrice(d.price);
+  const currentPrice = escapeHtml(display.value);
+  const referencePrice = display.kind === "price" && d.original_price
+    ? escapeHtml(d.original_price)
+    : "";
 
   return `
-    <div class="ticket-price-row">
+    <div class="ticket-price-row ticket-price-row-${display.kind}">
+      ${display.kind === "offer" ? '<span class="ticket-offer-label">Offer</span>' : ""}
       <span class="ticket-price">${currentPrice}</span>
       ${referencePrice ? `<span class="ticket-reference-price">${referencePrice}</span>` : ""}
-      ${discount ? `<span class="ticket-discount">${discount}</span>` : ""}
+      ${display.kind === "price" && discount ? `<span class="ticket-discount">${discount}</span>` : ""}
     </div>`;
+}
+
+function renderConditionLine(d) {
+  const condition = getDealCondition(d);
+  if (!condition) return "";
+  return `<p class="ticket-condition"><span>Condition</span> ${escapeHtml(condition)}</p>`;
 }
 
 function renderPostedTime(d) {
@@ -191,6 +243,8 @@ function renderDeals() {
     els.dealsList.innerHTML = pageItems.map(renderDealCard).join("");
   }
 
+  els.dealsList.setAttribute("aria-busy", "false");
+
   renderPagination(totalPages);
 }
 
@@ -209,6 +263,7 @@ function renderDealCard(d) {
           ${escapeHtml(d.title)}
         </a>
         ${renderPriceLine(d, discount)}
+        ${renderConditionLine(d)}
         <div class="ticket-foot">
           <div class="ticket-meta-row">
             <span class="ticket-source">${escapeHtml(d.store || "Unknown store")} · ${renderPostedTime(d)}</span>
@@ -227,7 +282,11 @@ function renderPagination(totalPages) {
     els.pagination.innerHTML = "";
     return;
   }
-  const buttons = [];
+  const buttons = [
+    `<button data-page="${currentPage - 1}" class="pagination-button pagination-direction" ${
+      currentPage === 1 ? "disabled" : ""
+    } aria-label="Previous page">Previous</button>`,
+  ];
   for (let p = 1; p <= totalPages; p++) {
     buttons.push(
       `<button data-page="${p}" class="pagination-button" ${
@@ -235,8 +294,13 @@ function renderPagination(totalPages) {
       } aria-label="Page ${p}">${p}</button>`
     );
   }
+  buttons.push(
+    `<button data-page="${currentPage + 1}" class="pagination-button pagination-direction" ${
+      currentPage === totalPages ? "disabled" : ""
+    } aria-label="Next page">Next</button>`,
+  );
   els.pagination.innerHTML = buttons.join("");
-  els.pagination.querySelectorAll("button").forEach((btn) => {
+  els.pagination.querySelectorAll("button:not(:disabled)").forEach((btn) => {
     btn.addEventListener("click", () => {
       currentPage = Number(btn.dataset.page);
       renderDeals();
@@ -248,7 +312,7 @@ function renderPagination(totalPages) {
 
 function renderCountdown() {
   if (!scrapedAtIso) return;
-  const nextRefresh = new Date(new Date(scrapedAtIso).getTime() + REFRESH_INTERVAL_MINUTES * 60_000);
+  const nextRefresh = new Date(new Date(scrapedAtIso).getTime() + REFRESH_INTERVAL_MINUTES * 60000);
 
   clearInterval(countdownTimer);
   function tick() {
@@ -258,15 +322,16 @@ function renderCountdown() {
       els.nextRefresh.textContent = "Counting again shortly…";
       return;
     }
-    const mins = Math.floor(msLeft / 60_000);
-    const secs = Math.floor((msLeft % 60_000) / 1000);
+    const mins = Math.floor(msLeft / 60000);
+    const secs = Math.floor((msLeft % 60000) / 1000);
     els.nextRefresh.textContent = `Next count in ${mins}m ${secs}s`;
   }
   tick();
   countdownTimer = setInterval(tick, 1000);
 }
 
-async function loadDeals({ silent = false } = {}) {
+async function loadDeals(options) {
+  const silent = Boolean(options && options.silent);
   try {
     const res = await fetch(`/data/deals.json?ts=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -283,7 +348,13 @@ async function loadDeals({ silent = false } = {}) {
   } catch (err) {
     if (!silent) {
       els.resultsMeta.textContent = "Counter unavailable";
-      els.dealsList.innerHTML = `<p class="ticket-state ticket-state-error">Couldn't pull the latest tickets. Try again in a moment.</p>`;
+      els.dealsList.setAttribute("aria-busy", "false");
+      els.dealsList.innerHTML = `<div class="ticket-state ticket-state-error" role="alert">
+        <p>Couldn't pull the latest tickets.</p>
+        <button type="button" class="retry-button">Try again</button>
+      </div>`;
+      const retryButton = els.dealsList.querySelector(".retry-button");
+      if (retryButton) retryButton.addEventListener("click", () => loadDeals());
     }
     console.error("Failed to load deals.json", err);
   }
@@ -309,10 +380,12 @@ if (HAS_DOCUMENT) {
 
 if (typeof module !== "undefined") {
   module.exports = {
+    classifyPrice,
     formatDelta,
     formatDiscount,
     formatPostTime,
     filterDealsByPostedWindow,
+    getDealCondition,
     getPostTimeMs,
     renderTallyDelta,
     renderVelocityStamp,
