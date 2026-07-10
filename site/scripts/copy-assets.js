@@ -5,6 +5,9 @@ const root = path.resolve(__dirname, "..");
 const copies = [
   ["src/index.html", "dist/index.html"],
   ["public/app.js", "dist/app.js"],
+  ["public/favicon.svg", "dist/favicon.svg"],
+  ["public/favicon.ico", "dist/favicon.ico"],
+  ["public/apple-touch-icon.png", "dist/apple-touch-icon.png"],
   ["public/assets/logo-mark.svg", "dist/assets/logo-mark.svg"],
   ["public/data/deals.json", "dist/data/deals.json"],
 ];
