@@ -173,6 +173,8 @@ assert.strictEqual(
 );
 
 assert.ok(renderTallyDelta({ vote_delta: 2 }).includes("+2 tallies since last count"));
+assert.ok(renderTallyDelta({ vote_delta: 2 }).includes("+2 since last count"));
+assert.ok(renderTallyDelta({ vote_delta: 2 }).includes('aria-label="+2 tallies since last count"'));
 assert.ok(renderTallyDelta({ vote_delta: 2, recent_velocity: 12.06 }).includes("/hr") === false);
 assert.ok(renderTallyDelta({ vote_delta: null }).includes("pending next count"));
 

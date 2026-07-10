@@ -145,8 +145,14 @@ function renderTallyDelta(d) {
   const label = hasDelta
     ? `${formatDelta(d.vote_delta)} tallies since last count`
     : "pending next count";
+  const compactLabel = hasDelta
+    ? `${formatDelta(d.vote_delta)} since last count`
+    : label;
 
-  return `<span class="ticket-rate">${label}</span>`;
+  return `<span class="ticket-rate" aria-label="${label}">
+    <span class="ticket-rate-full" aria-hidden="true">${label}</span>
+    <span class="ticket-rate-compact" aria-hidden="true">${compactLabel}</span>
+  </span>`;
 }
 
 function renderVelocityStamp(label) {
