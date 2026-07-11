@@ -76,7 +76,15 @@ async function subscribe(req: Request, body: any) {
     ? supabase.from("push_subscriptions").update(record).eq("id", existing.id)
     : supabase.from("push_subscriptions").upsert(record, { onConflict: "endpoint" });
   const { error } = await query;
-  if (error) return response({ error: "Could not save subscription." }, 500);
+  if (error) {
+    console.error("Could not save push subscription", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    return response({ error: "Could not save subscription." }, 500);
+  }
   return response({ installationId, managementSecret: newSecret });
 }
 
@@ -84,7 +92,13 @@ async function disable(body: any) {
   const existing = await authenticate(body.installationId, body.managementSecret);
   if (!existing) return response({ error: "Invalid installation credentials." }, 401);
   const { error } = await supabase.from("push_subscriptions").delete().eq("id", existing.id);
-  return error ? response({ error: "Could not disable subscription." }, 500) : response({ ok: true });
+  if (error) {
+    console.error("Could not disable push subscription", {
+      code: error.code, message: error.message, details: error.details, hint: error.hint,
+    });
+    return response({ error: "Could not disable subscription." }, 500);
+  }
+  return response({ ok: true });
 }
 
 function notificationBody(deal: any): string {
