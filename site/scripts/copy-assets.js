@@ -17,6 +17,7 @@ const copies = [
   ["public/icons/app-icon-maskable-192.png", "dist/icons/app-icon-maskable-192.png"],
   ["public/icons/app-icon-maskable-512.png", "dist/icons/app-icon-maskable-512.png"],
   ["public/icons/app-icon-maskable.svg", "dist/icons/app-icon-maskable.svg"],
+  ["public/icons/notification-badge.svg", "dist/icons/notification-badge.svg"],
   ["public/assets/logo-mark.svg", "dist/assets/logo-mark.svg"],
   ["public/data/deals.json", "dist/data/deals.json"],
 ];

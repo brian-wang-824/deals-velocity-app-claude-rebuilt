@@ -5,7 +5,7 @@ self.addEventListener("push", function (event) {
   event.waitUntil(self.registration.showNotification(title, {
     body: payload.body || "A deal reached one of your selected stamps.",
     icon: payload.icon || "/icons/app-icon-192.png",
-    badge: "/icons/app-icon-192.png",
+    badge: "/icons/notification-badge.svg",
     tag: payload.tag || "deal-velocity-alert",
     renotify: false,
     data: { url: payload.url || "/" },
