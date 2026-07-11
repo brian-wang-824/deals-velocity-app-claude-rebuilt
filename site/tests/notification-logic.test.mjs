@@ -9,7 +9,11 @@ assert.deepEqual(ALLOWED_THRESHOLDS, ["warming", "hot", "surging", "blazing", "o
 assert.deepEqual(normalizeThresholds(["inferno", "bogus", "warming", "inferno"]), ["warming", "inferno"]);
 assert.deepEqual(normalizeThresholds(null), []);
 
-assert.equal(enteredHigherStamp(undefined, "warming"), false, "first observation is not retroactive");
+for (const threshold of ALLOWED_THRESHOLDS) {
+  assert.equal(enteredHigherStamp(undefined, threshold), true, `first observation at ${threshold} notifies`);
+}
+assert.equal(enteredHigherStamp(undefined, "flat"), false, "first observation outside alert stamps is silent");
+assert.equal(enteredHigherStamp(undefined, "cooling"), false, "first observation outside alert stamps is silent");
 assert.equal(enteredHigherStamp("slow", "warming"), true);
 assert.equal(enteredHigherStamp("warming", "hot"), true);
 assert.equal(enteredHigherStamp("warming", "inferno"), true, "skips notify only the observed stamp");

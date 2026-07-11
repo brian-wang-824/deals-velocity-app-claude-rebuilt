@@ -6,9 +6,10 @@ export function normalizeThresholds(value) {
 }
 
 export function enteredHigherStamp(previousLabel, currentLabel) {
-  if (typeof previousLabel !== "string") return false;
   const currentRank = ALLOWED_THRESHOLDS.indexOf(currentLabel);
-  if (currentRank === -1 || previousLabel === currentLabel) return false;
+  if (currentRank === -1) return false;
+  if (typeof previousLabel !== "string") return true;
+  if (previousLabel === currentLabel) return false;
   const previousRank = ALLOWED_THRESHOLDS.indexOf(previousLabel);
   return currentRank > previousRank;
 }
