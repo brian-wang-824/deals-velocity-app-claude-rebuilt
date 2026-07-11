@@ -50,7 +50,7 @@ def dispatch_notifications(snapshot: dict) -> bool:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=60) as response:
             if not 200 <= response.status < 300:
                 print(f"WARNING: notification dispatch returned HTTP {response.status}.")
                 return False

@@ -171,20 +171,41 @@ async function processSnapshot(req: Request, body: any) {
     else failed += 1;
   }
 
-  for (const deal of body.deals) {
-    const label = String(deal.velocity_label || "");
-    const threadId = String(deal.thread_id || "");
-    if (!threadId) continue;
-    const { data: prior } = await supabase.from("deal_stamp_state").select("velocity_label")
-      .eq("thread_id", threadId).maybeSingle();
-    await supabase.from("deal_stamp_state").upsert({
-      thread_id: threadId, velocity_label: label, observed_at: body.scraped_at, updated_at: new Date().toISOString(),
-    });
-    if (!prior || !enteredHigherStamp(prior.velocity_label, label)) continue;
+  const currentDeals = body.deals.filter((deal: any) => String(deal.thread_id || ""));
+  if (!currentDeals.length) return response({ ok: true, sent, failed });
+  const threadIds = currentDeals.map((deal: any) => String(deal.thread_id));
+  const { data: priorRows, error: priorError } = await supabase.from("deal_stamp_state")
+    .select("thread_id,velocity_label").in("thread_id", threadIds);
+  if (priorError) throw priorError;
+  const priorByThread = new Map((priorRows || []).map((row) => [row.thread_id, row.velocity_label]));
+  const now = new Date().toISOString();
+  const { error: stateError } = await supabase.from("deal_stamp_state").upsert(
+    currentDeals.map((deal: any) => ({
+      thread_id: String(deal.thread_id),
+      velocity_label: String(deal.velocity_label || ""),
+      observed_at: body.scraped_at,
+      updated_at: now,
+    })),
+    { onConflict: "thread_id" },
+  );
+  if (stateError) throw stateError;
 
-    const { data: subscriptions } = await supabase.from("push_subscriptions").select("*")
-      .eq("enabled", true).contains("thresholds", [label]);
-    for (const subscription of subscriptions || []) {
+  const transitions = currentDeals.filter((deal: any) => {
+    const priorLabel = priorByThread.get(String(deal.thread_id));
+    return enteredHigherStamp(priorLabel, String(deal.velocity_label || ""));
+  });
+  const { data: activeSubscriptions, error: subscriptionsError } = transitions.length
+    ? await supabase.from("push_subscriptions").select("*").eq("enabled", true)
+    : { data: [], error: null };
+  if (subscriptionsError) throw subscriptionsError;
+
+  for (const deal of transitions) {
+    const label = String(deal.velocity_label);
+    const threadId = String(deal.thread_id);
+    const matchingSubscriptions = (activeSubscriptions || []).filter((subscription) =>
+      Array.isArray(subscription.thresholds) && subscription.thresholds.includes(label)
+    );
+    for (const subscription of matchingSubscriptions) {
       const { data: claimed } = await supabase.rpc("claim_notification_delivery", {
         target_subscription_id: subscription.id,
         target_thread_id: threadId,
