@@ -94,6 +94,23 @@ function formatDiscount(value) {
   return `-${Math.round(Number(value))}%`;
 }
 
+function sortDealsByDiscount(deals) {
+  return deals
+    .map((deal, index) => ({ deal, index }))
+    .sort((a, b) => {
+      const aValue = a.deal.discount_percentage;
+      const bValue = b.deal.discount_percentage;
+      const aDiscount = Number(aValue);
+      const bDiscount = Number(bValue);
+      const aValid = aValue !== null && aValue !== "" && Number.isFinite(aDiscount);
+      const bValid = bValue !== null && bValue !== "" && Number.isFinite(bDiscount);
+      if (aValid !== bValid) return aValid ? -1 : 1;
+      if (aValid && aDiscount !== bDiscount) return bDiscount - aDiscount;
+      return a.index - b.index;
+    })
+    .map(({ deal }) => deal);
+}
+
 function classifyPrice(value) {
   const normalized = String(value || "").trim();
   if (!normalized) {
@@ -242,7 +259,8 @@ function applyFiltersAndSort() {
     );
   }
   let sorted = [...filtered];
-  if (sort === "votes") sorted.sort((a, b) => b.votes - a.votes);
+  if (sort === "discount") sorted = sortDealsByDiscount(filtered);
+  else if (sort === "votes") sorted.sort((a, b) => b.votes - a.votes);
   else if (sort === "posted") sorted = sortDealsByNewest(filtered);
   // "velocity" (default) keeps the server-computed order from deals.json
 
@@ -414,5 +432,6 @@ if (typeof module !== "undefined") {
     renderTallyDelta,
     renderVelocityStamp,
     sortDealsByNewest,
+    sortDealsByDiscount,
   };
 }

@@ -14,7 +14,22 @@ const {
   renderTallyDelta,
   renderVelocityStamp,
   sortDealsByNewest,
+  sortDealsByDiscount,
 } = require("../public/app.js");
+
+const discountSorted = sortDealsByDiscount([
+  { thread_id: "missing" },
+  { thread_id: "medium", discount_percentage: 50 },
+  { thread_id: "highest", discount_percentage: 79.6 },
+  { thread_id: "null", discount_percentage: null },
+  { thread_id: "invalid", discount_percentage: "unknown" },
+  { thread_id: "same-discount", discount_percentage: 50 },
+]);
+
+assert.deepStrictEqual(
+  discountSorted.map((deal) => deal.thread_id),
+  ["highest", "medium", "same-discount", "missing", "null", "invalid"],
+);
 
 const newestSorted = sortDealsByNewest([
   { thread_id: "missing" },
