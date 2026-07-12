@@ -1,6 +1,12 @@
 # Deals Velocity
 
-A static Slickdeals dashboard that ranks current frontpage deals by thumbs-up velocity. A scheduled Python scraper maintains a rolling snapshot history; a dependency-light browser app provides search, posted-time filters, sorting, and pagination.
+An independent, experimental dashboard that calculates activity trends for deals appearing on the Slickdeals frontpage. A scheduled data collector maintains a limited rolling history; a dependency-light browser app provides search, posted-time filters, sorting, and pagination.
+
+## Data source and independence
+
+Deal information and community-vote counts originate from [Slickdeals](https://slickdeals.net/) and are transformed here into independently calculated velocity metrics. This project is not affiliated with, endorsed by, sponsored by, or operated by Slickdeals, LLC. “Slickdeals” and related marks belong to their respective owner.
+
+Displayed deal information is time-sensitive, may be incomplete or inaccurate, and should be verified on the linked source and retailer pages before use. This repository does not grant permission to access, reproduce, or redistribute third-party content. Anyone operating or deploying the project is responsible for obtaining any required authorization and complying with applicable website terms, robots instructions, intellectual-property rights, and law.
 
 ## How it works
 
@@ -35,6 +41,8 @@ npm ci
 
 ## Development
 
+The collection and deployment instructions below assume that the operator has obtained any permission required by the source website. They are not authorization from Slickdeals or any other third party.
+
 Watch and rebuild CSS in `site/public/style.css`:
 
 ```powershell
@@ -65,7 +73,7 @@ The production build writes minified CSS and required static assets to `site/dis
 
 ## Automation and deployment
 
-`.github/workflows/scrape.yml` runs every ten minutes and commits updated `history.json` and `deals.json` files. `render.yaml` configures the Render static site to run `npm install && npm run build`, publish `site/dist`, and disable caching for JSON data.
+When enabled by an authorized operator, `.github/workflows/scrape.yml` runs every ten minutes and commits updated `history.json` and `deals.json` files. `render.yaml` configures the Render static site to run `npm install && npm run build`, publish `site/dist`, and disable caching for JSON data.
 
 ## Push notifications
 
