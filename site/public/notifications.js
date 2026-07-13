@@ -101,7 +101,7 @@
   async function enableNotifications() {
     var thresholds = selectedThresholds();
     if (!thresholds.length) {
-      status.textContent = "Select at least one stamp first.";
+      status.textContent = "Select at least one heat level first.";
       return;
     }
     if (!isSupported()) {
@@ -137,7 +137,7 @@
         managementSecret: result.managementSecret || installation.managementSecret,
         thresholds: thresholds,
       });
-      status.textContent = "Notifications enabled for " + thresholds.length + " stamp" + (thresholds.length === 1 ? "." : "s.");
+      status.textContent = "Notifications enabled for " + thresholds.length + " heat level" + (thresholds.length === 1 ? "." : "s.");
     } catch (error) {
       status.textContent = error.message || "Could not enable notifications.";
     } finally {

@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
-import { ALLOWED_THRESHOLDS as ALLOWED, enteredHigherStamp, normalizeThresholds } from "./logic.mjs";
+import { ALLOWED_THRESHOLDS as ALLOWED, enteredHigherHeat, normalizeThresholds } from "./logic.mjs";
 
 const cors = {
   "Access-Control-Allow-Origin": Deno.env.get("SITE_ORIGIN") || "*",
@@ -174,12 +174,12 @@ async function processSnapshot(req: Request, body: any) {
   const currentDeals = body.deals.filter((deal: any) => String(deal.thread_id || ""));
   if (!currentDeals.length) return response({ ok: true, sent, failed });
   const threadIds = currentDeals.map((deal: any) => String(deal.thread_id));
-  const { data: priorRows, error: priorError } = await supabase.from("deal_stamp_state")
+  const { data: priorRows, error: priorError } = await supabase.from("deal_heat_state")
     .select("thread_id,velocity_label").in("thread_id", threadIds);
   if (priorError) throw priorError;
   const priorByThread = new Map((priorRows || []).map((row) => [row.thread_id, row.velocity_label]));
   const now = new Date().toISOString();
-  const { error: stateError } = await supabase.from("deal_stamp_state").upsert(
+  const { error: stateError } = await supabase.from("deal_heat_state").upsert(
     currentDeals.map((deal: any) => ({
       thread_id: String(deal.thread_id),
       velocity_label: String(deal.velocity_label || ""),
@@ -192,7 +192,7 @@ async function processSnapshot(req: Request, body: any) {
 
   const transitions = currentDeals.filter((deal: any) => {
     const priorLabel = priorByThread.get(String(deal.thread_id));
-    return enteredHigherStamp(priorLabel, String(deal.velocity_label || ""));
+    return enteredHigherHeat(priorLabel, String(deal.velocity_label || ""));
   });
   const { data: activeSubscriptions, error: subscriptionsError } = transitions.length
     ? await supabase.from("push_subscriptions").select("*").eq("enabled", true)

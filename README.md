@@ -77,7 +77,7 @@ When enabled by an authorized operator, `.github/workflows/scrape.yml` runs ever
 
 ## Push notifications
 
-The site supports anonymous, per-device Web Push subscriptions for the six stamped velocity levels. Render continues to host the static PWA, while Supabase stores subscriptions and sends notifications after each successful scrape.
+The site supports anonymous, per-device Web Push subscriptions for the six heat levels. Render continues to host the static PWA, while Supabase stores subscriptions and sends notifications after each successful scrape.
 
 ### Supabase setup
 

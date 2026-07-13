@@ -42,7 +42,7 @@ class TestEnrichDealsWithVelocity(unittest.TestCase):
         self.assertEqual(len(enriched), 1)
         self.assertIsNone(enriched[0]["recent_velocity"])
         self.assertIsNone(enriched[0]["lifetime_velocity"])
-        self.assertEqual(enriched[0]["velocity_label"], "needs second scrape")
+        self.assertIsNone(enriched[0]["velocity_label"])
 
     def test_velocity_computed_between_two_snapshots(self):
         history = [
@@ -64,7 +64,7 @@ class TestEnrichDealsWithVelocity(unittest.TestCase):
         enriched = enrich_deals_with_velocity(history)
         deal_2 = next(d for d in enriched if d["thread_id"] == "2")
         self.assertIsNone(deal_2["recent_velocity"])
-        self.assertEqual(deal_2["velocity_label"], "needs second scrape")
+        self.assertIsNone(deal_2["velocity_label"])
 
     def test_discount_percentage_calculated(self):
         history = [
@@ -96,10 +96,10 @@ class TestComputeVelocityAndLabels(unittest.TestCase):
         self.assertEqual(_velocity_label(18, None), "surging")
         self.assertEqual(_velocity_label(12, None), "hot")
         self.assertEqual(_velocity_label(6, None), "warming")
-        self.assertEqual(_velocity_label(0.5, None), "slow")
-        self.assertEqual(_velocity_label(0, None), "flat")
-        self.assertEqual(_velocity_label(-1, None), "cooling")
-        self.assertEqual(_velocity_label(None, None), "needs second scrape")
+        self.assertIsNone(_velocity_label(0.5, None))
+        self.assertIsNone(_velocity_label(0, None))
+        self.assertIsNone(_velocity_label(-1, None))
+        self.assertIsNone(_velocity_label(None, None))
 
     def test_irregular_scrape_interval_uses_hourly_velocity(self):
         history = [

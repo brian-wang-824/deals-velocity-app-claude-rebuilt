@@ -52,10 +52,10 @@ def compute_velocity(
     return round(delta_votes / delta_hours, 2)
 
 
-def _velocity_label(recent: Optional[float], lifetime: Optional[float]) -> str:
+def _velocity_label(recent: Optional[float], lifetime: Optional[float]) -> Optional[str]:
     velocity = recent if recent is not None else lifetime
     if velocity is None:
-        return "needs second scrape"
+        return None
     if velocity >= 36:
         return "inferno"
     if velocity >= 30:
@@ -68,11 +68,7 @@ def _velocity_label(recent: Optional[float], lifetime: Optional[float]) -> str:
         return "hot"
     if velocity >= 6:
         return "warming"
-    if velocity == 0:
-        return "flat"
-    if velocity > 0:
-        return "slow"
-    return "cooling"
+    return None
 
 
 def enrich_deals_with_velocity(history: list[dict]) -> list[dict]:
@@ -112,9 +108,9 @@ def enrich_deals_with_velocity(history: list[dict]) -> list[dict]:
         # BUGFIX: if this thread's only observation *is* the current one
         # (first_time == current_time), there's no real earlier data point
         # to compare against. Without this guard, compute_velocity divides
-        # by the 1-minute floor and reports a false 0.0 ("flat") for deals
-        # that have genuinely never been scraped before -- they should show
-        # "needs second scrape" instead, same as recent_velocity already does.
+        # by the 1-minute floor and reports a false 0.0 for deals that have
+        # genuinely never been scraped before. No heat is assigned until a
+        # second observation exists.
         if first_time < current_time:
             lifetime_velocity = compute_velocity(deal["votes"], current_time, first_votes, first_time)
         else:

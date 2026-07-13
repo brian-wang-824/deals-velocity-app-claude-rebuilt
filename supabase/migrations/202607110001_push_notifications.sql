@@ -19,7 +19,7 @@ create table if not exists public.push_subscriptions (
   )
 );
 
-create table if not exists public.deal_stamp_state (
+create table if not exists public.deal_heat_state (
   thread_id text primary key,
   velocity_label text not null,
   observed_at timestamptz not null,
@@ -47,11 +47,11 @@ create index if not exists push_subscriptions_thresholds_idx
   on public.push_subscriptions using gin (thresholds) where enabled;
 
 alter table public.push_subscriptions enable row level security;
-alter table public.deal_stamp_state enable row level security;
+alter table public.deal_heat_state enable row level security;
 alter table public.notification_deliveries enable row level security;
 
 revoke all on public.push_subscriptions from anon, authenticated;
-revoke all on public.deal_stamp_state from anon, authenticated;
+revoke all on public.deal_heat_state from anon, authenticated;
 revoke all on public.notification_deliveries from anon, authenticated;
 
 create or replace function public.claim_notification_delivery(
@@ -79,4 +79,3 @@ $$;
 
 revoke all on function public.claim_notification_delivery(uuid, text, text) from public, anon, authenticated;
 grant execute on function public.claim_notification_delivery(uuid, text, text) to service_role;
-

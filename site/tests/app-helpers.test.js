@@ -10,9 +10,9 @@ const {
   formatPostTime,
   getPostTimeMs,
   getDealCondition,
-  renderDealStamp,
+  renderDealHeat,
   renderTallyDelta,
-  renderVelocityStamp,
+  renderVelocityHeat,
   sortDealsByNewest,
   sortDealsByDiscount,
 } = require("../public/app.js");
@@ -150,41 +150,41 @@ assert.strictEqual(
   "Select Home Depot Stores",
 );
 assert.strictEqual(
-  renderVelocityStamp("inferno"),
-  '<span class="badge-stamp badge-inferno" aria-label="Inferno velocity">&#x1F525;&#x1F525; INFERNO</span>',
+  renderVelocityHeat("inferno"),
+  '<span class="badge-heat badge-inferno" aria-label="Inferno heat">&#x1F525;&#x1F525; INFERNO</span>',
 );
 assert.strictEqual(
-  renderVelocityStamp("on fire"),
-  '<span class="badge-stamp badge-on-fire" aria-label="On fire velocity">&#x1F525; ON FIRE</span>',
+  renderVelocityHeat("on fire"),
+  '<span class="badge-heat badge-on-fire" aria-label="On fire heat">&#x1F525; ON FIRE</span>',
 );
 assert.strictEqual(
-  renderVelocityStamp("blazing"),
-  '<span class="badge-stamp badge-blazing">BLAZING</span>',
+  renderVelocityHeat("blazing"),
+  '<span class="badge-heat badge-blazing">BLAZING</span>',
 );
 assert.strictEqual(
-  renderVelocityStamp("surging"),
-  '<span class="badge-stamp badge-surging">SURGING</span>',
+  renderVelocityHeat("surging"),
+  '<span class="badge-heat badge-surging">SURGING</span>',
 );
 assert.strictEqual(
-  renderVelocityStamp("hot"),
-  '<span class="badge-stamp badge-hot">HOT</span>',
+  renderVelocityHeat("hot"),
+  '<span class="badge-heat badge-hot">HOT</span>',
 );
 assert.strictEqual(
-  renderVelocityStamp("warming"),
-  '<span class="badge-stamp badge-warming">WARMING</span>',
+  renderVelocityHeat("warming"),
+  '<span class="badge-heat badge-warming">WARMING</span>',
 );
-assert.strictEqual(renderVelocityStamp("needs second scrape"), "");
+assert.strictEqual(renderVelocityHeat(null), "");
 assert.strictEqual(
-  renderDealStamp({ vote_delta: 5, velocity_label: "inferno" }),
-  '<span class="badge-stamp badge-inferno" aria-label="Inferno velocity">&#x1F525;&#x1F525; INFERNO</span>',
-);
-assert.strictEqual(
-  renderDealStamp({ vote_delta: 4, velocity_label: "surging" }),
-  '<span class="badge-stamp badge-surging">SURGING</span>',
+  renderDealHeat({ vote_delta: 5, velocity_label: "inferno" }),
+  '<span class="badge-heat badge-inferno" aria-label="Inferno heat">&#x1F525;&#x1F525; INFERNO</span>',
 );
 assert.strictEqual(
-  renderDealStamp({ vote_delta: null, velocity_label: "warming" }),
-  '<span class="badge-stamp badge-warming">WARMING</span>',
+  renderDealHeat({ vote_delta: 4, velocity_label: "surging" }),
+  '<span class="badge-heat badge-surging">SURGING</span>',
+);
+assert.strictEqual(
+  renderDealHeat({ vote_delta: null, velocity_label: "warming" }),
+  '<span class="badge-heat badge-warming">WARMING</span>',
 );
 
 assert.ok(renderTallyDelta({ vote_delta: 2 }).includes("+2 tallies since last count"));
@@ -207,6 +207,6 @@ assert.ok(workerSource.includes('badge: "/icons/notification-badge.png"'));
 const notificationsSource = fs.readFileSync(path.join(__dirname, "../public/notifications.js"), "utf8");
 assert.ok(notificationsSource.includes("Notification.requestPermission()"));
 assert.ok(notificationsSource.includes("applicationServerKey"));
-assert.ok(notificationsSource.includes("Select at least one stamp first."));
+assert.ok(notificationsSource.includes("Select at least one heat level first."));
 
 console.log("app helper tests passed");

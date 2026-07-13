@@ -76,7 +76,7 @@ class TestRunScrapeEndToEnd(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(deals_out["count"], 1)
         self.assertEqual(deals_out["deals"][0]["thread_id"], "1")
         # First-ever scrape: no velocity data yet.
-        self.assertEqual(deals_out["deals"][0]["velocity_label"], "needs second scrape")
+        self.assertIsNone(deals_out["deals"][0]["velocity_label"])
 
     async def test_no_leftover_tmp_files_after_write(self):
         with patch.object(run_scrape, "fetch_frontpage_deals", return_value=[_fake_deal("1", 10)]):

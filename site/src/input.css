@@ -398,7 +398,7 @@
     display: none;
   }
 
-  .badge-stamp {
+  .badge-heat {
     position: absolute;
     z-index: 1;
     top: -0.45rem;

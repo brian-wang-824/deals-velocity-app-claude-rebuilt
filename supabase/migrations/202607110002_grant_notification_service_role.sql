@@ -4,7 +4,6 @@
 -- access; anon and authenticated remain revoked by the preceding migration.
 grant usage on schema public to service_role;
 grant select, insert, update, delete on table public.push_subscriptions to service_role;
-grant select, insert, update, delete on table public.deal_stamp_state to service_role;
+grant select, insert, update, delete on table public.deal_heat_state to service_role;
 grant select, insert, update, delete on table public.notification_deliveries to service_role;
 grant usage, select on sequence public.notification_deliveries_id_seq to service_role;
-

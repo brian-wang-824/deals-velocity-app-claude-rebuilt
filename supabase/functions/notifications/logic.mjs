@@ -5,7 +5,7 @@ export function normalizeThresholds(value) {
   return ALLOWED_THRESHOLDS.filter((item) => value.includes(item));
 }
 
-export function enteredHigherStamp(previousLabel, currentLabel) {
+export function enteredHigherHeat(previousLabel, currentLabel) {
   const currentRank = ALLOWED_THRESHOLDS.indexOf(currentLabel);
   if (currentRank === -1) return false;
   if (typeof previousLabel !== "string") return true;

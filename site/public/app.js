@@ -172,30 +172,30 @@ function renderTallyDelta(d) {
   </span>`;
 }
 
-function renderVelocityStamp(label) {
+function renderVelocityHeat(label) {
   if (label === "inferno") {
-    return `<span class="badge-stamp badge-inferno" aria-label="Inferno velocity">&#x1F525;&#x1F525; INFERNO</span>`;
+    return `<span class="badge-heat badge-inferno" aria-label="Inferno heat">&#x1F525;&#x1F525; INFERNO</span>`;
   }
   if (label === "on fire") {
-    return `<span class="badge-stamp badge-on-fire" aria-label="On fire velocity">&#x1F525; ON FIRE</span>`;
+    return `<span class="badge-heat badge-on-fire" aria-label="On fire heat">&#x1F525; ON FIRE</span>`;
   }
   if (label === "blazing") {
-    return `<span class="badge-stamp badge-blazing">BLAZING</span>`;
+    return `<span class="badge-heat badge-blazing">BLAZING</span>`;
   }
   if (label === "surging") {
-    return `<span class="badge-stamp badge-surging">SURGING</span>`;
+    return `<span class="badge-heat badge-surging">SURGING</span>`;
   }
   if (label === "hot") {
-    return `<span class="badge-stamp badge-hot">HOT</span>`;
+    return `<span class="badge-heat badge-hot">HOT</span>`;
   }
   if (label === "warming") {
-    return `<span class="badge-stamp badge-warming">WARMING</span>`;
+    return `<span class="badge-heat badge-warming">WARMING</span>`;
   }
   return "";
 }
 
-function renderDealStamp(d) {
-  return renderVelocityStamp(d.velocity_label);
+function renderDealHeat(d) {
+  return renderVelocityHeat(d.velocity_label);
 }
 
 function renderPriceLine(d, discount) {
@@ -295,7 +295,7 @@ function renderDealCard(d) {
 
   return `
     <article class="ticket">
-      ${renderDealStamp(d)}
+      ${renderDealHeat(d)}
       <div class="ticket-tear" aria-hidden="true"></div>
       <div class="ticket-photo">
         <img src="${escapeHtml(d.image_url || "")}" alt="" loading="lazy" />
@@ -428,9 +428,9 @@ if (typeof module !== "undefined") {
     filterDealsByPostedWindow,
     getDealCondition,
     getPostTimeMs,
-    renderDealStamp,
+    renderDealHeat,
     renderTallyDelta,
-    renderVelocityStamp,
+    renderVelocityHeat,
     sortDealsByNewest,
     sortDealsByDiscount,
   };

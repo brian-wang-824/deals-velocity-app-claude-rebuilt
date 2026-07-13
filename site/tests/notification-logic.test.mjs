@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   ALLOWED_THRESHOLDS,
-  enteredHigherStamp,
+  enteredHigherHeat,
   normalizeThresholds,
 } from "../../supabase/functions/notifications/logic.mjs";
 
@@ -10,15 +10,14 @@ assert.deepEqual(normalizeThresholds(["inferno", "bogus", "warming", "inferno"])
 assert.deepEqual(normalizeThresholds(null), []);
 
 for (const threshold of ALLOWED_THRESHOLDS) {
-  assert.equal(enteredHigherStamp(undefined, threshold), true, `first observation at ${threshold} notifies`);
+  assert.equal(enteredHigherHeat(undefined, threshold), true, `first observation at ${threshold} notifies`);
 }
-assert.equal(enteredHigherStamp(undefined, "flat"), false, "first observation outside alert stamps is silent");
-assert.equal(enteredHigherStamp(undefined, "cooling"), false, "first observation outside alert stamps is silent");
-assert.equal(enteredHigherStamp("slow", "warming"), true);
-assert.equal(enteredHigherStamp("warming", "hot"), true);
-assert.equal(enteredHigherStamp("warming", "inferno"), true, "skips notify only the observed stamp");
-assert.equal(enteredHigherStamp("hot", "hot"), false);
-assert.equal(enteredHigherStamp("inferno", "hot"), false, "downward movement does not notify");
-assert.equal(enteredHigherStamp("hot", "flat"), false);
+assert.equal(enteredHigherHeat(undefined, null), false, "first observation without heat is silent");
+assert.equal(enteredHigherHeat(null, "warming"), true);
+assert.equal(enteredHigherHeat("warming", "hot"), true);
+assert.equal(enteredHigherHeat("warming", "inferno"), true, "skips notify only the observed heat");
+assert.equal(enteredHigherHeat("hot", "hot"), false);
+assert.equal(enteredHigherHeat("inferno", "hot"), false, "downward movement does not notify");
+assert.equal(enteredHigherHeat("hot", null), false);
 
 console.log("notification logic tests passed");

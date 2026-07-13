@@ -3,7 +3,7 @@ self.addEventListener("push", function (event) {
   try { payload = event.data ? event.data.json() : {}; } catch (_err) { payload = {}; }
   var title = payload.title || "Deal velocity alert";
   event.waitUntil(self.registration.showNotification(title, {
-    body: payload.body || "A deal reached one of your selected stamps.",
+    body: payload.body || "A deal reached one of your selected heat levels.",
     icon: payload.icon || "/icons/app-icon-192.png",
     badge: "/icons/notification-badge.png",
     tag: payload.tag || "deal-velocity-alert",
