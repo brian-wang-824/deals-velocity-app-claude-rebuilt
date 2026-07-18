@@ -33,10 +33,19 @@ function randomSecret(): string {
 
 async function authenticate(installationId: string, managementSecret: string) {
   if (!installationId || !managementSecret) return null;
-  const { data } = await supabase.from("push_subscriptions").select("*")
+  const { data, error } = await supabase.from("push_subscriptions").select("*")
     .eq("installation_id", installationId).maybeSingle();
+  if (error) throw error;
   if (!data || data.management_secret_hash !== await sha256(managementSecret)) return null;
   return data;
+}
+
+async function installationExists(installationId: string): Promise<boolean> {
+  if (!installationId) return false;
+  const { data, error } = await supabase.from("push_subscriptions").select("id")
+    .eq("installation_id", installationId).maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
 }
 
 async function subscribe(req: Request, body: any) {
@@ -51,7 +60,13 @@ async function subscribe(req: Request, body: any) {
   let managementSecret = body.managementSecret as string | null;
   let existing = installationId && managementSecret
     ? await authenticate(installationId, managementSecret) : null;
-  if (installationId && !existing) return response({ error: "Invalid installation credentials." }, 401);
+  if (installationId && !existing) {
+    const stale = !await installationExists(installationId);
+    return response({
+      error: stale ? "This notification installation is no longer registered." : "Invalid installation credentials.",
+      code: stale ? "stale_installation" : "invalid_installation_credentials",
+    }, 401);
+  }
   let newSecret: string | null = null;
   if (!existing) {
     installationId = crypto.randomUUID();
@@ -90,7 +105,12 @@ async function subscribe(req: Request, body: any) {
 
 async function disable(body: any) {
   const existing = await authenticate(body.installationId, body.managementSecret);
-  if (!existing) return response({ error: "Invalid installation credentials." }, 401);
+  if (!existing) {
+    if (body.installationId && !await installationExists(body.installationId)) {
+      return response({ ok: true, alreadyDisabled: true });
+    }
+    return response({ error: "Invalid installation credentials.", code: "invalid_installation_credentials" }, 401);
+  }
   const { error } = await supabase.from("push_subscriptions").delete().eq("id", existing.id);
   if (error) {
     console.error("Could not disable push subscription", {
