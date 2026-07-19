@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
-import { ALLOWED_THRESHOLDS as ALLOWED, enteredHigherHeat, normalizeThresholds } from "./logic.mjs";
+import { enteredHigherHeat, normalizeThresholds } from "./logic.mjs";
 
 const cors = {
   "Access-Control-Allow-Origin": Deno.env.get("SITE_ORIGIN") || "*",

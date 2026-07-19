@@ -329,8 +329,7 @@ async def run() -> None:
     # are durably registered. A notification failure remains best effort.
     dispatch_notifications(public_snapshot)
 
-    missing_posted_count = sum(1 for deal in deals if deal.posted_time is None)
-    print(f"Scraped {len(deals)} deals from the frontpage. Missing post times: {missing_posted_count}.")
+    print(f"Scraped {len(deals)} deals from the frontpage.")
 
 
 if __name__ == "__main__":

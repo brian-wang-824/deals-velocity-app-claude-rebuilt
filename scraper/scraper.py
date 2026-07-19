@@ -28,7 +28,7 @@ from bs4 import BeautifulSoup
 try:
     import httpx
 except ImportError:  # pragma: no cover - only hit in envs without httpx installed
-    # Pure parsing/date/caching logic below doesn't need httpx at all, so we
+    # Pure parsing and date logic below doesn't need httpx at all, so we
     # don't want an import error here to block unit-testing that logic.
     # Anything that actually performs network I/O raises a clear error below
     # if httpx wasn't importable.

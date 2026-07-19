@@ -7,7 +7,6 @@
     --ink: #1b1b1e;
     --ink-soft: #232327;
     --paper: #f3ead9;
-    --paper-dim: #e4d8c0;
     --photo-stage: #ffffff;
     --photo-stage-fade: rgba(228, 216, 192, 0.2);
     --ketchup: #e8432f;
@@ -472,13 +471,6 @@
     .badge-inferno { animation: none; }
   }
 
-  .badge-money {
-    border-color: var(--mint);
-    background: var(--ink);
-    font-size: 0.8rem;
-    letter-spacing: 0;
-  }
-
   .ticket-state {
     grid-column: 1 / -1;
     padding-block: 5rem;
@@ -644,7 +636,6 @@
   }
 
   .ticket-source,
-  .ticket-rate-label,
   .ticket-rate {
     font-size: 0.8125rem;
   }
