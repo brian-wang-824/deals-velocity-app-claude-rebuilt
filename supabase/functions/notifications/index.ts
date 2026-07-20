@@ -1,6 +1,13 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
-import { enteredHigherHeat, normalizeThresholds, PUSH_DELIVERY_OPTIONS } from "./logic.mjs";
+import {
+  acceptedDeliveryValues,
+  assertDeliveryStatusPersisted,
+  DELIVERY_STATUS,
+  enteredHigherHeat,
+  normalizeThresholds,
+  PUSH_DELIVERY_OPTIONS,
+} from "./logic.mjs";
 
 const cors = {
   "Access-Control-Allow-Origin": Deno.env.get("SITE_ORIGIN") || "*",
@@ -127,9 +134,23 @@ function notificationBody(deal: any): string {
 }
 
 async function markDelivery(subscriptionId: string, deal: any, values: Record<string, unknown>) {
-  await supabase.from("notification_deliveries").update({ ...values, updated_at: new Date().toISOString() })
+  const result = await supabase.from("notification_deliveries")
+    .update({ ...values, updated_at: new Date().toISOString() })
     .eq("subscription_id", subscriptionId).eq("thread_id", String(deal.thread_id))
-    .eq("velocity_label", deal.velocity_label);
+    .eq("velocity_label", deal.velocity_label).select("id").maybeSingle();
+  try {
+    assertDeliveryStatusPersisted(result);
+  } catch (error) {
+    console.error("Could not persist notification delivery status", {
+      subscriptionId,
+      threadId: String(deal.thread_id),
+      velocityLabel: deal.velocity_label,
+      status: values.status,
+      code: result.error?.code,
+      message: result.error?.message,
+    });
+    throw error;
+  }
 }
 
 async function sendDelivery(subscription: any, deal: any): Promise<boolean> {
@@ -143,19 +164,17 @@ async function sendDelivery(subscription: any, deal: any): Promise<boolean> {
       tag: `${deal.thread_id}:${deal.velocity_label}`,
       icon: deal.image_url || "/icons/app-icon-192.png",
     }), PUSH_DELIVERY_OPTIONS);
-    await markDelivery(subscription.id, deal, {
-      status: "delivered", delivered_at: new Date().toISOString(), error_message: null,
-    });
-    return true;
   } catch (error: any) {
     const permanent = error?.statusCode === 404 || error?.statusCode === 410;
     await markDelivery(subscription.id, deal, {
-      status: permanent ? "failed_permanent" : "failed_transient",
+      status: permanent ? DELIVERY_STATUS.FAILED_PERMANENT : DELIVERY_STATUS.FAILED_TRANSIENT,
       error_message: String(error?.message || error).slice(0, 1000),
     });
     if (permanent) await supabase.from("push_subscriptions").delete().eq("id", subscription.id);
     return false;
   }
+  await markDelivery(subscription.id, deal, acceptedDeliveryValues(new Date().toISOString()));
+  return true;
 }
 
 async function processSnapshot(req: Request, body: any) {
