@@ -1,5 +1,32 @@
 export const ALLOWED_THRESHOLDS = ["warming", "hot", "surging", "blazing", "on fire", "inferno"];
 
+export const DELIVERY_STATUS = Object.freeze({
+  PENDING: "pending",
+  ACCEPTED: "accepted",
+  DELIVERED: "delivered",
+  FAILED_TRANSIENT: "failed_transient",
+  FAILED_PERMANENT: "failed_permanent",
+});
+
+export function acceptedDeliveryValues(acceptedAt) {
+  return {
+    status: DELIVERY_STATUS.ACCEPTED,
+    accepted_at: acceptedAt,
+    error_message: null,
+  };
+}
+
+export function assertDeliveryStatusPersisted(result) {
+  if (result?.error) {
+    const message = result.error.message || String(result.error);
+    throw new Error(`Could not persist notification delivery status: ${message}`);
+  }
+  if (!result?.data) {
+    throw new Error("Could not persist notification delivery status: no matching delivery row.");
+  }
+  return result.data;
+}
+
 export function normalizeThresholds(value) {
   if (!Array.isArray(value)) return [];
   return ALLOWED_THRESHOLDS.filter((item) => value.includes(item));
