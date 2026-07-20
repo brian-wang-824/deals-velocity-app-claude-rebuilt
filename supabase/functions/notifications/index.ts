@@ -4,9 +4,9 @@ import {
   acceptedDeliveryValues,
   assertDeliveryStatusPersisted,
   DELIVERY_STATUS,
-  enteredHigherHeat,
   normalizeThresholds,
   PUSH_DELIVERY_OPTIONS,
+  processNotificationSnapshot,
 } from "./logic.mjs";
 
 const cors = {
@@ -128,23 +128,27 @@ async function disable(body: any) {
   return response({ ok: true });
 }
 
-function notificationBody(deal: any): string {
-  const details = [deal.store, deal.price].filter(Boolean).join(" · ");
-  return details || "Tap to view this deal.";
-}
-
-async function markDelivery(subscriptionId: string, deal: any, values: Record<string, unknown>) {
+async function markDelivery(delivery: any, values: Record<string, unknown>) {
   const result = await supabase.from("notification_deliveries")
-    .update({ ...values, updated_at: new Date().toISOString() })
-    .eq("subscription_id", subscriptionId).eq("thread_id", String(deal.thread_id))
-    .eq("velocity_label", deal.velocity_label).select("id").maybeSingle();
+    .update({
+      ...values,
+      processing_started_at: null,
+      claim_token: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", delivery.delivery_id)
+    .eq("status", "processing")
+    .eq("claim_token", delivery.claim_token)
+    .select("id")
+    .maybeSingle();
   try {
     assertDeliveryStatusPersisted(result);
   } catch (error) {
     console.error("Could not persist notification delivery status", {
-      subscriptionId,
-      threadId: String(deal.thread_id),
-      velocityLabel: deal.velocity_label,
+      deliveryId: delivery.delivery_id,
+      subscriptionId: delivery.subscription_id,
+      threadId: delivery.thread_id,
+      velocityLabel: delivery.velocity_label,
       status: values.status,
       code: result.error?.code,
       message: result.error?.message,
@@ -153,28 +157,75 @@ async function markDelivery(subscriptionId: string, deal: any, values: Record<st
   }
 }
 
-async function sendDelivery(subscription: any, deal: any): Promise<boolean> {
+async function sendDelivery(delivery: any): Promise<boolean> {
+  let pushError: any = null;
   try {
     await webpush.sendNotification({
-      endpoint: subscription.endpoint,
-      keys: { p256dh: subscription.p256dh, auth: subscription.auth },
-    }, JSON.stringify({
-      title: `${String(deal.velocity_label).toUpperCase()}: ${deal.title || "Deal alert"}`,
-      body: notificationBody(deal), url: deal.url || "/",
-      tag: `${deal.thread_id}:${deal.velocity_label}`,
-      icon: deal.image_url || "/icons/app-icon-192.png",
-    }), PUSH_DELIVERY_OPTIONS);
-  } catch (error: any) {
-    const permanent = error?.statusCode === 404 || error?.statusCode === 410;
-    await markDelivery(subscription.id, deal, {
-      status: permanent ? DELIVERY_STATUS.FAILED_PERMANENT : DELIVERY_STATUS.FAILED_TRANSIENT,
-      error_message: String(error?.message || error).slice(0, 1000),
-    });
-    if (permanent) await supabase.from("push_subscriptions").delete().eq("id", subscription.id);
-    return false;
+      endpoint: delivery.endpoint,
+      keys: { p256dh: delivery.p256dh, auth: delivery.auth },
+    }, JSON.stringify(delivery.payload), PUSH_DELIVERY_OPTIONS);
+  } catch (error) {
+    pushError = error;
   }
-  await markDelivery(subscription.id, deal, acceptedDeliveryValues(new Date().toISOString()));
-  return true;
+
+  if (!pushError) {
+    await markDelivery(delivery, acceptedDeliveryValues(new Date().toISOString()));
+    return true;
+  }
+
+  const permanent = pushError?.statusCode === 404 || pushError?.statusCode === 410;
+  await markDelivery(delivery, {
+    status: permanent ? DELIVERY_STATUS.FAILED_PERMANENT : DELIVERY_STATUS.FAILED_TRANSIENT,
+    error_message: String(pushError?.message || pushError).slice(0, 1000),
+    ...(permanent ? {} : { next_attempt_at: new Date(Date.now() + 5 * 60 * 1000).toISOString() }),
+  });
+  if (permanent) {
+    const { error } = await supabase.from("push_subscriptions").delete().eq("id", delivery.subscription_id);
+    if (error) throw error;
+  }
+  return false;
+}
+
+async function loadHeatState(threadIds: string[]) {
+  const { data, error } = await supabase.from("deal_heat_state")
+    .select("thread_id,velocity_label").in("thread_id", threadIds);
+  if (error) throw error;
+  return data || [];
+}
+
+async function loadActiveSubscriptions() {
+  const { data, error } = await supabase.from("push_subscriptions")
+    .select("id,thresholds").eq("enabled", true);
+  if (error) throw error;
+  return data || [];
+}
+
+async function enqueueDeliveries(deliveries: any[]) {
+  const { error } = await supabase.from("notification_deliveries").upsert(deliveries, {
+    onConflict: "subscription_id,thread_id,velocity_label",
+    ignoreDuplicates: true,
+  });
+  if (error) throw error;
+}
+
+async function advanceHeatState(deals: any[], scrapedAt: string) {
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("deal_heat_state").upsert(
+    deals.map((deal) => ({
+      thread_id: String(deal.thread_id),
+      velocity_label: String(deal.velocity_label || ""),
+      observed_at: scrapedAt,
+      updated_at: now,
+    })),
+    { onConflict: "thread_id" },
+  );
+  if (error) throw error;
+}
+
+async function claimDeliveries() {
+  const { data, error } = await supabase.rpc("claim_notification_deliveries", { claim_limit: 100 });
+  if (error) throw error;
+  return data || [];
 }
 
 async function processSnapshot(req: Request, body: any) {
@@ -187,75 +238,15 @@ async function processSnapshot(req: Request, body: any) {
     Deno.env.get("VAPID_PUBLIC_KEY")!, Deno.env.get("VAPID_PRIVATE_KEY")!,
   );
 
-  let sent = 0;
-  let failed = 0;
-  const dealByDeliveryKey = new Map(body.deals.map((deal: any) => [
-    `${String(deal.thread_id)}:${String(deal.velocity_label)}`, deal,
-  ]));
-  const { data: retries } = await supabase.from("notification_deliveries")
-    .select("subscription_id,thread_id,velocity_label,push_subscriptions(*)")
-    .eq("status", "failed_transient").limit(100);
-  for (const retry of retries || []) {
-    const deal = dealByDeliveryKey.get(`${retry.thread_id}:${retry.velocity_label}`);
-    const subscription = Array.isArray(retry.push_subscriptions)
-      ? retry.push_subscriptions[0] : retry.push_subscriptions;
-    if (!deal || !subscription?.enabled) continue;
-    const { data: claimed } = await supabase.rpc("claim_notification_delivery", {
-      target_subscription_id: retry.subscription_id,
-      target_thread_id: retry.thread_id,
-      target_velocity_label: retry.velocity_label,
-    });
-    if (!claimed) continue;
-    if (await sendDelivery(subscription, deal)) sent += 1;
-    else failed += 1;
-  }
-
-  const currentDeals = body.deals.filter((deal: any) => String(deal.thread_id || ""));
-  if (!currentDeals.length) return response({ ok: true, sent, failed });
-  const threadIds = currentDeals.map((deal: any) => String(deal.thread_id));
-  const { data: priorRows, error: priorError } = await supabase.from("deal_heat_state")
-    .select("thread_id,velocity_label").in("thread_id", threadIds);
-  if (priorError) throw priorError;
-  const priorByThread = new Map((priorRows || []).map((row) => [row.thread_id, row.velocity_label]));
-  const now = new Date().toISOString();
-  const { error: stateError } = await supabase.from("deal_heat_state").upsert(
-    currentDeals.map((deal: any) => ({
-      thread_id: String(deal.thread_id),
-      velocity_label: String(deal.velocity_label || ""),
-      observed_at: body.scraped_at,
-      updated_at: now,
-    })),
-    { onConflict: "thread_id" },
-  );
-  if (stateError) throw stateError;
-
-  const transitions = currentDeals.filter((deal: any) => {
-    const priorLabel = priorByThread.get(String(deal.thread_id));
-    return enteredHigherHeat(priorLabel, String(deal.velocity_label || ""));
+  const result = await processNotificationSnapshot(body, {
+    loadHeatState,
+    loadActiveSubscriptions,
+    enqueueDeliveries,
+    advanceHeatState,
+    claimDeliveries,
+    sendDelivery,
   });
-  const { data: activeSubscriptions, error: subscriptionsError } = transitions.length
-    ? await supabase.from("push_subscriptions").select("*").eq("enabled", true)
-    : { data: [], error: null };
-  if (subscriptionsError) throw subscriptionsError;
-
-  for (const deal of transitions) {
-    const label = String(deal.velocity_label);
-    const threadId = String(deal.thread_id);
-    const matchingSubscriptions = (activeSubscriptions || []).filter((subscription) =>
-      Array.isArray(subscription.thresholds) && subscription.thresholds.includes(label)
-    );
-    for (const subscription of matchingSubscriptions) {
-      const { data: claimed } = await supabase.rpc("claim_notification_delivery", {
-        target_subscription_id: subscription.id,
-        target_thread_id: threadId,
-        target_velocity_label: label,
-      });
-      if (!claimed) continue;
-      if (await sendDelivery(subscription, deal)) sent += 1;
-      else failed += 1;
-    }
-  }
-  return response({ ok: true, sent, failed });
+  return response({ ok: true, ...result });
 }
 
 Deno.serve(async (req) => {

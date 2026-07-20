@@ -10,6 +10,7 @@ import {
 
 assert.deepEqual(DELIVERY_STATUS, {
   PENDING: "pending",
+  PROCESSING: "processing",
   ACCEPTED: "accepted",
   DELIVERED: "delivered",
   FAILED_TRANSIENT: "failed_transient",
